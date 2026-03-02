@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Model Viewer</title>
+    <title>3D Viewer</title>
     <style>
         body { margin: 0; background-color: #151520; overflow: hidden; }
         #canvas-container { width: 100vw; height: 100vh; }
@@ -11,18 +11,25 @@
 </head>
 <body>
     <div id="canvas-container"></div>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.164.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.164.0/examples/jsm/"
+            }
+        }
+    </script>
     <script type="module">
-        import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.164.0/build/three.module.js';
-        import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.164.0/examples/jsm/loaders/GLTFLoader.js';
-        import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.164.0/examples/jsm/controls/OrbitControls.js';
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         camera.position.set(5, 5, 5);
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
         document.getElementById('canvas-container').appendChild(renderer.domElement);
 
         scene.add(new THREE.AmbientLight(0xffffff, 1.5));
@@ -31,43 +38,26 @@
         scene.add(light);
 
         const loader = new GLTFLoader();
-        
+        // The ./ ensures it looks in your GitHub folder
         loader.load('./3js.glb', (gltf) => {
             const model = gltf.scene;
-            
             const box = new THREE.Box3().setFromObject(model);
             const size = box.getSize(new THREE.Vector3());
             const center = box.getCenter(new THREE.Vector3());
-
-            model.position.x += (model.position.x - center.x);
-            model.position.y += (model.position.y - center.y);
-            model.position.z += (model.position.z - center.z);
-            
+            model.position.sub(center);
             const maxDim = Math.max(size.x, size.y, size.z);
             const scale = 5 / maxDim;
             model.scale.set(scale, scale, scale);
-            
             scene.add(model);
-            console.log("Model loaded successfully");
-        }, undefined, (error) => {
-            console.error("An error happened", error);
-        });
+        }, undefined, (error) => { console.error(error); });
 
         const controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-
         function animate() {
             requestAnimationFrame(animate);
             controls.update();
             renderer.render(scene, camera);
         }
         animate();
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
     </script>
 </body>
 </html>
