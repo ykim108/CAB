@@ -45,7 +45,7 @@
 
     // 2. MODEL LOADER
     const loader = new GLTFLoader();
-    loader.load('3js.glb', (gltf) => {
+    loader.load('./3js.glb', (gltf) => {
         const model = gltf.scene;
 
         // Calculate size and center
@@ -102,4 +102,5 @@
     });
 </script>
 </body>
+
 </html>
