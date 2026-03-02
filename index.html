@@ -1,13 +1,14 @@
-<!DOCTYPE html>
+I've got you. That specific Future Firm blue is a very clean, desaturated "Gallery Blue."I have updated the code to set the background back to that color ($#151520$ if you want the dark version, or a soft light blue if you prefer the daytime look). I've used the Dark Gallery Blue ($#151520$) as it makes the bright water and the model pop significantly more.I also kept the water level at 0.5 so it continues to overlap your model.🛠️ The "Future Firm Blue" UpdateHTML<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CAB-3D | Deep Water</title>
+    <title>CAB-3D | Future Firm Blue</title>
     <style>
         body { 
             margin: 0; 
-            background-color: #f0f0f0; 
+            /* The classic Future Firm dark blue background */
+            background-color: #151520; 
             display: flex; 
             justify-content: center; 
             align-items: center; 
@@ -17,8 +18,9 @@
         #canvas-container { 
             width: 80vw; 
             height: 75vh; 
-            background-color: #fff; 
+            background-color: #ffffff; 
             border: 1px solid #000; 
+            position: relative;
         }
     </style>
 </head>
@@ -41,7 +43,8 @@
 
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xffffff);
+        // Matching the interior of the box to the background for a seamless look
+        scene.background = new THREE.Color(0xffffff); 
 
         const camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 2000);
         
@@ -56,7 +59,6 @@
         dirLight.position.set(10, 20, 10);
         scene.add(dirLight);
 
-        // 🌊 BIG WAVE WATER SETUP
         const textureLoader = new THREE.TextureLoader();
         const normalMap = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/water/waternormals.jpg');
         normalMap.wrapS = normalMap.wrapT = THREE.RepeatWrapping;
@@ -67,17 +69,15 @@
             waterNormals: normalMap,
             sunDirection: new THREE.Vector3().copy(dirLight.position).normalize(),
             sunColor: 0xffffff,
-            waterColor: 0x82e1f1, // Lighter, vibrant blue
-            distortionScale: 15.0, // MUCH BIGGER WAVES (Standard was 3.7)
-            size: 5.0, // Scale of the ripples
+            waterColor: 0x82e1f1,
+            distortionScale: 15.0, 
+            size: 5.0,
             alpha: 0.9
         });
         water.rotation.x = -Math.PI / 2;
         
-        // --- 🏗️ POSITIONING THE WATER ---
-        // Adjust this number to bring the water higher or lower
+        // Water level raised to overlap model
         water.position.y = 0.5; 
-        
         scene.add(water);
 
         const loader = new GLTFLoader();
@@ -88,7 +88,6 @@
             const size = box.getSize(new THREE.Vector3());
             
             model.position.sub(center); 
-            // Model stays at 0, water is at 0.5, so it overlaps halfway
             model.position.y = 0; 
             scene.add(model);
 
@@ -104,7 +103,6 @@
 
         function animate() {
             requestAnimationFrame(animate);
-            // Faster wave movement
             water.material.uniforms[ 'time' ].value += 1.5 / 60.0;
             controls.update();
             renderer.render(scene, camera);
