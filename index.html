@@ -3,17 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CAB-3D | Dynamic Water Level</title>
+    <title>CAB-3D | Future Firm Style</title>
     <style>
+        /* This is the background of the WHOLE PAGE */
         body { 
             margin: 0; 
-            background-color: #151520; /* Future Firm Dark Blue */
+            background-color: #151520 !important; /* Future Firm Dark Blue */
             display: flex; 
             justify-content: center; 
             align-items: center; 
             height: 100vh; 
             overflow: hidden;
         }
+        /* This is the box in the middle */
         #canvas-container { 
             width: 80vw; 
             height: 75vh; 
@@ -42,9 +44,9 @@
 
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xffffff);
+        scene.background = new THREE.Color(0xffffff); // Inside the box is white
 
-        const camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 5000);
+        const camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 2000);
         
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(container.clientWidth, container.clientHeight);
@@ -61,44 +63,35 @@
         const normalMap = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/water/waternormals.jpg');
         normalMap.wrapS = normalMap.wrapT = THREE.RepeatWrapping;
 
-        const water = new Water(new THREE.PlaneGeometry(2000, 2000), {
+        const water = new Water(new THREE.PlaneGeometry(1000, 1000), {
             textureWidth: 512,
             textureHeight: 512,
             waterNormals: normalMap,
             sunDirection: new THREE.Vector3().copy(dirLight.position).normalize(),
             sunColor: 0xffffff,
             waterColor: 0x82e1f1,
-            distortionScale: 12.0, 
+            distortionScale: 15.0, // BIG WAVES
             size: 5.0,
             alpha: 0.9
         });
         water.rotation.x = -Math.PI / 2;
+        water.position.y = 0.5; // RAISED WATER LEVEL
         scene.add(water);
 
         const loader = new GLTFLoader();
         loader.load('./3js.glb', (gltf) => {
             const model = gltf.scene;
-            
-            // Calculate size and center
             const box = new THREE.Box3().setFromObject(model);
             const center = box.getCenter(new THREE.Vector3());
             const size = box.getSize(new THREE.Vector3());
             
-            // 1. Center the model at 0,0,0
             model.position.sub(center); 
+            model.position.y = 0; 
             scene.add(model);
 
-            // 2. THE SMART FORMULA
-            // We find the bottom relative to the center and add 25% of the total height
-            const bottomOfModel = -(size.y / 2);
-            water.position.y = bottomOfModel + (size.y * 0.25); 
-
-            // 3. Frame the camera based on model size
             const maxDim = Math.max(size.x, size.y, size.z);
-            camera.position.set(maxDim * 1.8, maxDim * 1.2, maxDim * 1.8);
+            camera.position.set(maxDim * 2, maxDim * 1.5, maxDim * 2);
             camera.lookAt(0, 0, 0);
-            
-            console.log("Model height:", size.y, "Water positioned at:", water.position.y);
         });
 
         const controls = new OrbitControls(camera, renderer.domElement);
@@ -108,7 +101,17 @@
 
         function animate() {
             requestAnimationFrame(animate);
-            water.material.uniforms[ 'time' ].value += 1.2 / 60.0;
+            water.material.uniforms[ 'time' ].value += 1.5 / 60.0;
             controls.update();
             renderer.render(scene, camera);
         }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        });
+    </script>
+</body>
+</html>
