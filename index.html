@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CAB-3D | Deep Transparent Water</title>
+    <title>CAB-3D | Glass Water</title>
     <style>
         body { margin: 0; background-color: #151520; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
         #canvas-container { width: 80vw; height: 75vh; background-color: #ffffff; border: 1px solid #000; position: relative; }
@@ -24,7 +24,6 @@
         import * as THREE from 'three';
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import { Water } from 'three/addons/objects/Water.js';
 
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
@@ -43,33 +42,35 @@
         dirLight.position.set(10, 20, 10);
         scene.add(dirLight);
 
+        // --- 🌊 THE NEW "TRUE GLASS" WATER ---
         const textureLoader = new THREE.TextureLoader();
-        const normalMap = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/water/waternormals.jpg');
-        normalMap.wrapS = normalMap.wrapT = THREE.RepeatWrapping;
+        const waterNormalMap = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/water/waternormals.jpg');
+        waterNormalMap.wrapS = waterNormalMap.wrapT = THREE.RepeatWrapping;
+        // Make the waves larger across the giant plane
+        waterNormalMap.repeat.set(50, 50); 
 
-        // --- 🌊 THE UPDATED WATER SETTINGS ---
-        const water = new Water(new THREE.PlaneGeometry(1000, 1000), {
-            textureWidth: 512,
-            textureHeight: 512,
-            waterNormals: normalMap,
-            sunDirection: new THREE.Vector3().copy(dirLight.position).normalize(),
-            sunColor: 0xffffff,
-            waterColor: 0x001e3d,       // 1. New DEEP MIDNIGHT BLUE
-            distortionScale: 30.0,      // Keeping big waves
-            size: 3.0,
-            alpha: 0.7                  // 2. TRANSPARENCY (Allows you to see through)
+        const waterGeo = new THREE.PlaneGeometry(1000, 1000);
+        const waterMat = new THREE.MeshPhysicalMaterial({
+            color: 0x001e3d,         // Deep Midnight Blue
+            metalness: 0.1,          // Low metalness so it isn't a solid mirror
+            roughness: 0.1,          // Smooth surface
+            transmission: 0.85,      // THIS MAKES IT TRANSPARENT (85% see-through)
+            transparent: true,
+            opacity: 1.0,            // Opacity must be 1.0 when using transmission
+            normalMap: waterNormalMap,
+            normalScale: new THREE.Vector2(2.0, 2.0), // The height of the waves
+            side: THREE.DoubleSide
         });
+        
+        const water = new THREE.Mesh(waterGeo, waterMat);
         water.rotation.x = -Math.PI / 2;
         scene.add(water);
 
         const loader = new GLTFLoader();
-        // Updated cache buster to ?v=7
-        loader.load('./3js.glb?v=7', (gltf) => {
+        // Updated to ?v=8
+        loader.load('./3js.glb?v=8', (gltf) => {
             const model = gltf.scene;
             
-            // --- TEXTURE OVERRIDE REMOVED HERE ---
-            // The model now uses whatever material was exported from Rhino (default white).
-
             let box = new THREE.Box3().setFromObject(model);
             let size = box.getSize(new THREE.Vector3());
             
@@ -98,8 +99,11 @@
 
         function animate() {
             requestAnimationFrame(animate);
-            // Waves moving at big wave speed
-            water.material.uniforms[ 'time' ].value += 4.0 / 60.0;
+            
+            // This is how we animate the new glass water
+            waterNormalMap.offset.x -= 0.001;
+            waterNormalMap.offset.y += 0.001;
+
             controls.update();
             renderer.render(scene, camera);
         }
