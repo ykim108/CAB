@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CAB-3D | Perfect Water Level</title>
+    <title>CAB-3D | Concrete & Deep Water</title>
     <style>
         body { margin: 0; background-color: #151520; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
         #canvas-container { width: 80vw; height: 75vh; background-color: #ffffff; border: 1px solid #000; position: relative; }
@@ -30,7 +30,6 @@
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0xffffff);
 
-        // The camera now has a massive viewing distance just in case
         const camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 10000);
         
         const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -45,52 +44,67 @@
         scene.add(dirLight);
 
         const textureLoader = new THREE.TextureLoader();
-        const normalMap = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/water/waternormals.jpg');
-        normalMap.wrapS = normalMap.wrapT = THREE.RepeatWrapping;
+        
+        // --- 🌊 WATER SETUP ---
+        const waterNormalMap = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/water/waternormals.jpg');
+        waterNormalMap.wrapS = waterNormalMap.wrapT = THREE.RepeatWrapping;
 
-        // The water plane
         const water = new Water(new THREE.PlaneGeometry(1000, 1000), {
             textureWidth: 512,
             textureHeight: 512,
-            waterNormals: normalMap,
+            waterNormals: waterNormalMap,
             sunDirection: new THREE.Vector3().copy(dirLight.position).normalize(),
             sunColor: 0xffffff,
-            waterColor: 0x82e1f1,
-            distortionScale: 12.0, 
-            size: 5.0,
-            alpha: 0.9
+            waterColor: 0x004488,
+            distortionScale: 30.0, 
+            size: 3.0,
+            alpha: 0.65
         });
         water.rotation.x = -Math.PI / 2;
         scene.add(water);
 
+        // --- 🧱 CONCRETE TEXTURE SETUP ---
+        // Using a generic gritty noise map to simulate concrete aggregate
+        const concreteTexture = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/roughness_map.jpg');
+        concreteTexture.wrapS = concreteTexture.wrapT = THREE.RepeatWrapping;
+        concreteTexture.repeat.set(3, 3); // Makes the grain smaller/larger
+
+        // Create the concrete material
+        const concreteMaterial = new THREE.MeshStandardMaterial({
+            color: 0x999999,         // Base architectural gray
+            map: concreteTexture,    // The gritty image
+            roughness: 0.9,          // Concrete is very matte/rough
+            metalness: 0.1           // Concrete is not shiny
+        });
+
         const loader = new GLTFLoader();
-        // Added the ?v=3 to force GitHub to bypass the cache
-        loader.load('./3js.glb?v=3', (gltf) => {
+        loader.load('./3js.glb?v=6', (gltf) => {
             const model = gltf.scene;
             
-            // 1. Find the original size
+            // --- 🎨 APPLY CONCRETE TO EVERYTHING ---
+            model.traverse((child) => {
+                if (child.isMesh) {
+                    child.material = concreteMaterial; // Override original material
+                }
+            });
+
             let box = new THREE.Box3().setFromObject(model);
             let size = box.getSize(new THREE.Vector3());
             
-            // 2. FORCE THE SCALE: Make the model exactly 20 units wide
             const maxOriginalDim = Math.max(size.x, size.y, size.z);
             const scaleFactor = 20 / maxOriginalDim;
             model.scale.set(scaleFactor, scaleFactor, scaleFactor);
 
-            // 3. Recalculate size and center AFTER scaling
             box.setFromObject(model);
             size = box.getSize(new THREE.Vector3());
             const center = box.getCenter(new THREE.Vector3());
 
-            // 4. Center it perfectly
             model.position.sub(center); 
             scene.add(model);
 
-            // 5. Smart Water: Exactly 25% up from the bottom of the scaled model
             const bottomOfModel = -(size.y / 2);
-            water.position.y = bottomOfModel + (size.y * 0.25); 
+            water.position.y = bottomOfModel + (size.y * 0.50); 
 
-            // 6. Lock the camera in a perfect viewing spot
             camera.position.set(30, 20, 30);
             camera.lookAt(0, 0, 0);
         });
@@ -102,7 +116,7 @@
 
         function animate() {
             requestAnimationFrame(animate);
-            water.material.uniforms[ 'time' ].value += 1.2 / 60.0;
+            water.material.uniforms[ 'time' ].value += 4.0 / 60.0;
             controls.update();
             renderer.render(scene, camera);
         }
