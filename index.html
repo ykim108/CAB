@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CAB-3D | Birds & Water</title>
+    <title>CAB-3D | Right To Water</title>
     <style>
         body { margin: 0; background-color: #151520; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
         #canvas-container { width: 80vw; height: 75vh; background-color: #ffffff; border: 1px solid #000; position: relative; }
@@ -42,7 +42,6 @@
         dirLight.position.set(10, 20, 10);
         scene.add(dirLight);
 
-        // --- 🌊 WATER SETUP ---
         const textureLoader = new THREE.TextureLoader();
         const waterNormalMap = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/water/waternormals.jpg');
         waterNormalMap.wrapS = waterNormalMap.wrapT = THREE.RepeatWrapping;
@@ -65,7 +64,6 @@
         water.rotation.x = -Math.PI / 2;
         scene.add(water);
 
-        // --- 🦅 BIRD FLOCK SETUP ---
         const birds = new THREE.Group();
         scene.add(birds);
         
